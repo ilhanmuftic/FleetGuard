@@ -12,13 +12,11 @@ export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, isLoading } = useAuth();  // <-- get isLoading from auth
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
 
     try {
       await login(email, password);
@@ -32,8 +30,6 @@ export default function LoginForm() {
         description: error instanceof Error ? error.message : "Login failed",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -47,7 +43,7 @@ export default function LoginForm() {
           <h2 className="text-3xl font-bold text-gray-900">Smart&Safe</h2>
           <p className="mt-2 text-sm text-gray-600">Vehicle Management System</p>
         </div>
-        
+
         <Card>
           <CardContent className="pt-6">
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -82,15 +78,19 @@ export default function LoginForm() {
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="remember-me" 
+                  <Checkbox
+                    id="remember-me"
                     checked={rememberMe}
-                    onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                    onCheckedChange={(checked) => setRememberMe(!!checked)}
                   />
                   <Label htmlFor="remember-me" className="text-sm">Remember me</Label>
                 </div>
                 <div className="text-sm">
-                  <a href="#" className="font-medium text-primary hover:text-blue-500">
+                  <a
+                    href="#"
+                    className="font-medium text-primary hover:text-blue-500"
+                    onClick={(e) => e.preventDefault()} // optional: prevent reload
+                  >
                     Forgot password?
                   </a>
                 </div>
