@@ -9,6 +9,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import type { VehicleRequestWithDetails } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
+import TestSupabaseConnection from "./TestSupabase";
 
 export default function AdminDashboard() {
   const [selectedApproval, setSelectedApproval] = useState<VehicleRequestWithDetails | null>(null);
@@ -36,7 +37,7 @@ export default function AdminDashboard() {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/requests"] });
       queryClient.invalidateQueries({ queryKey: ["/api/stats/vehicles"] });
-      
+
       if (variables.status === "approved") {
         setSelectedApproval(data);
         toast({
@@ -73,6 +74,8 @@ export default function AdminDashboard() {
 
   return (
     <Layout title="Dashboard">
+      <TestSupabaseConnection />
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card>
@@ -223,11 +226,10 @@ export default function AdminDashboard() {
               <div className="space-y-4">
                 {recentActivity.map((activity: VehicleRequestWithDetails) => (
                   <div key={activity.id} className="flex items-start space-x-3">
-                    <div className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      activity.status === "approved" 
-                        ? "bg-green-100" 
-                        : "bg-red-100"
-                    }`}>
+                    <div className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 ${activity.status === "approved"
+                      ? "bg-green-100"
+                      : "bg-red-100"
+                      }`}>
                       {activity.status === "approved" ? (
                         <Check className="h-4 w-4 text-green-600" />
                       ) : (
@@ -242,7 +244,7 @@ export default function AdminDashboard() {
                         {activity.vehicle?.model || "Unknown Vehicle"} - {activity.vehicle?.plateNumber || "N/A"}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {activity.approvedAt 
+                        {activity.approvedAt
                           ? new Date(activity.approvedAt).toLocaleString()
                           : new Date(activity.createdAt).toLocaleString()
                         }
