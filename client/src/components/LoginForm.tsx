@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,31 +7,92 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Car } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
-  const { login, isLoading } = useAuth();  // <-- get isLoading from auth
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { login, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    try {
-      await login(email, password);
+  // Add effect to handle successful login
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      console.log("[LoginForm] User is now authenticated and loaded, redirecting...");
       toast({
         title: "Success",
         description: "Successfully logged in!",
       });
-    } catch (error) {
+      setTimeout(() => {
+        setLocation("/");
+      }, 100);
+    }
+  }, [isAuthenticated, isLoading, toast, setLocation]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Prevent submission if already submitting or loading
+    if (isSubmitting || isLoading) {
+      console.log("[LoginForm] Already submitting or loading, ignoring submit");
+      return;
+    }
+
+    // Validate inputs
+    if (!email || !password) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Login failed",
+        description: "Please enter both email and password",
         variant: "destructive",
       });
+      return;
+    }
+
+    console.log("[LoginForm] Starting login process");
+    setIsSubmitting(true);
+
+    try {
+      console.log("[LoginForm] Attempting login with email:", email);
+      await login(email, password);
+      console.log("[LoginForm] Login successful");
+      // Note: We don't need to do anything here as the useEffect will handle the redirect
+    } catch (error) {
+      console.error("[LoginForm] Login error:", error);
+      let errorMessage = "Login failed";
+
+      if (error instanceof Error) {
+        // Handle specific Supabase error messages
+        if (error.message.includes("Invalid login credentials")) {
+          errorMessage = "Invalid email or password";
+        } else if (error.message.includes("Email not confirmed")) {
+          errorMessage = "Please confirm your email address";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      // Only reset submitting state if we're not authenticated
+      // This prevents the button from re-enabling during the redirect
+      if (!isAuthenticated) {
+        setIsSubmitting(false);
+      }
     }
   };
+
+  // Update button to show correct loading state
+  const buttonText = isSubmitting ? "Signing in..." :
+    isLoading ? "Loading..." :
+      "Sign in";
+  const isButtonDisabled = isSubmitting || isLoading;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -99,9 +160,9 @@ export default function LoginForm() {
               <Button
                 type="submit"
                 className="w-full"
-                disabled={isLoading}
+                disabled={isButtonDisabled}
               >
-                {isLoading ? "Signing in..." : "Sign in"}
+                {buttonText}
               </Button>
 
               <div className="text-center text-sm text-gray-600">

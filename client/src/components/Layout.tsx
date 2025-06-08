@@ -13,34 +13,33 @@ export default function Layout({ children, title, actions }: LayoutProps) {
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const navigationItems = user?.role === "admin" 
+  const navigationItems = user?.role === "admin"
     ? [
-        { icon: "fas fa-tachometer-alt", label: "Dashboard", active: true },
-        { icon: "fas fa-car", label: "Vehicles", active: false },
-        { icon: "fas fa-clipboard-list", label: "Requests", active: false },
-        { icon: "fas fa-history", label: "History", active: false },
-      ]
+      { icon: "fas fa-tachometer-alt", label: "Dashboard", active: true },
+      { icon: "fas fa-car", label: "Vehicles", active: false },
+      { icon: "fas fa-clipboard-list", label: "Requests", active: false },
+      { icon: "fas fa-history", label: "History", active: false },
+    ]
     : [
-        { icon: "fas fa-tachometer-alt", label: "Dashboard", active: true },
-        { icon: "fas fa-plus-circle", label: "Request Vehicle", active: false },
-        { icon: "fas fa-clipboard-list", label: "My Bookings", active: false },
-        { icon: "fas fa-history", label: "History", active: false },
-      ];
+      { icon: "fas fa-tachometer-alt", label: "Dashboard", active: true },
+      { icon: "fas fa-plus-circle", label: "Request Vehicle", active: false },
+      { icon: "fas fa-clipboard-list", label: "My Bookings", active: false },
+      { icon: "fas fa-history", label: "History", active: false },
+    ];
 
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-40 bg-gray-600 bg-opacity-75 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-200 ease-in-out lg:translate-x-0 ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-200 ease-in-out lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}>
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
@@ -59,18 +58,17 @@ export default function Layout({ children, title, actions }: LayoutProps) {
               <X className="h-5 w-5" />
             </button>
           </div>
-          
+
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-2">
             {navigationItems.map((item, index) => (
               <a
                 key={index}
                 href="#"
-                className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg ${
-                  item.active
-                    ? "text-white bg-primary"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                }`}
+                className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg ${item.active
+                  ? "text-white bg-primary"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                  }`}
               >
                 <i className={`${item.icon} mr-3`}></i>
                 {item.label}
@@ -108,7 +106,7 @@ export default function Layout({ children, title, actions }: LayoutProps) {
           <div className="px-4 sm:px-6 py-4">
             <div className="flex justify-between items-center">
               <div className="flex items-center">
-                <button 
+                <button
                   className="lg:hidden mr-3 p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100"
                   onClick={() => setSidebarOpen(true)}
                 >

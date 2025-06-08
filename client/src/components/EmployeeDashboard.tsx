@@ -8,6 +8,7 @@ import VehicleRequestModal from "./VehicleRequestModal";
 import { useState } from "react";
 import type { VehicleRequestWithDetails, Vehicle } from "@shared/schema";
 import { useAuth } from "@/lib/auth";
+import supabase from "@/lib/supabase";
 
 export default function EmployeeDashboard() {
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
@@ -15,24 +16,42 @@ export default function EmployeeDashboard() {
   const { user } = useAuth();
 
   const { data: userRequests = [] } = useQuery({
-    queryKey: ["/api/requests", user?.id],
-    queryFn: () => fetch(`/api/requests?userId=${user?.id}`).then(res => res.json()),
-  });
+    queryKey: ['vehicle_requests', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return []
+      const { data, error } = await supabase
+        .from('vehicle_requests')
+        .select('*')
+        .eq('user_id', user.id)
+
+      if (error) throw error
+      return data
+    }
+  })
 
   const { data: vehicles = [] } = useQuery({
-    queryKey: ["/api/vehicles"],
-  });
+    queryKey: ['vehicles'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('vehicles')
+        .select('*')
 
-  const activeBooking = userRequests.find((req: VehicleRequestWithDetails) => 
-    req.status === "approved" && 
-    new Date(req.startDate) <= new Date() && 
+      if (error) throw error
+      return data
+    }
+  })
+
+
+  const activeBooking = userRequests.find((req: VehicleRequestWithDetails) =>
+    req.status === "approved" &&
+    new Date(req.startDate) <= new Date() &&
     new Date(req.endDate) >= new Date()
   );
 
   const availableVehicles = (vehicles as Vehicle[]).filter((vehicle: Vehicle) => vehicle.status === "available");
 
   return (
-    <Layout 
+    <Layout
       title="My Dashboard"
       actions={
         <Button onClick={() => {
@@ -47,7 +66,7 @@ export default function EmployeeDashboard() {
       {/* Current Bookings */}
       <div className="mb-8">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Current Bookings</h3>
-        
+
         {activeBooking ? (
           <Card className="mb-4">
             <CardContent className="p-6">
@@ -67,7 +86,7 @@ export default function EmployeeDashboard() {
                 </div>
                 <Badge className="bg-green-100 text-green-800">Active</Badge>
               </div>
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Start Date</p>
@@ -92,14 +111,14 @@ export default function EmployeeDashboard() {
                   <p className="text-sm text-green-600 font-medium">Code Active</p>
                 </div>
               </div>
-              
+
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <div className="flex items-start">
                   <i className="fas fa-info-circle text-blue-600 mt-0.5 mr-3"></i>
                   <div>
                     <p className="text-sm font-medium text-blue-900">Access Code Instructions</p>
                     <p className="text-sm text-blue-700 mt-1">
-                      Use the 4-digit code <strong>{activeBooking.accessCode}</strong> to unlock and start the vehicle. 
+                      Use the 4-digit code <strong>{activeBooking.accessCode}</strong> to unlock and start the vehicle.
                       This code is valid only for your booking period and will expire automatically.
                     </p>
                   </div>
@@ -112,8 +131,8 @@ export default function EmployeeDashboard() {
             <CardContent className="p-6 text-center">
               <Car className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-500">No active bookings</p>
-              <Button 
-                className="mt-4" 
+              <Button
+                className="mt-4"
                 onClick={() => {
                   setSelectedVehicleId(undefined);
                   setIsRequestModalOpen(true);
@@ -143,14 +162,14 @@ export default function EmployeeDashboard() {
             </Button>
           </div>
         </div>
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {availableVehicles.map((vehicle: Vehicle) => (
             <Card key={vehicle.id} className="overflow-hidden">
               <div className="aspect-video">
-                <img 
-                  src={vehicle.imageUrl || "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200"} 
-                  alt={vehicle.model} 
+                <img
+                  src={vehicle.imageUrl || "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200"}
+                  alt={vehicle.model}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -160,7 +179,7 @@ export default function EmployeeDashboard() {
                   <Badge className="bg-green-100 text-green-800">Available</Badge>
                 </div>
                 <p className="text-sm text-gray-600 mb-3">License: {vehicle.plateNumber}</p>
-                
+
                 <div className="space-y-2 mb-4">
                   <div className="flex items-center text-sm text-gray-600">
                     <Users className="h-4 w-4 mr-2" />
@@ -173,16 +192,16 @@ export default function EmployeeDashboard() {
                   <div className="flex items-center text-sm text-gray-600">
                     <Calendar className="h-4 w-4 mr-2" />
                     <span>
-                      Last serviced: {vehicle.lastMaintenance 
+                      Last serviced: {vehicle.lastMaintenance
                         ? new Date(vehicle.lastMaintenance).toLocaleDateString()
                         : "N/A"
                       }
                     </span>
                   </div>
                 </div>
-                
-                <Button 
-                  className="w-full" 
+
+                <Button
+                  className="w-full"
                   onClick={() => {
                     setSelectedVehicleId(vehicle.id);
                     setIsRequestModalOpen(true);
@@ -223,63 +242,63 @@ export default function EmployeeDashboard() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                {userRequests.map((request: VehicleRequestWithDetails) => (
-                  <tr key={request.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
-                          {request.vehicle.model}
+                  {userRequests.map((request: VehicleRequestWithDetails) => (
+                    <tr key={request.id}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {request.vehicle.model}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {request.vehicle.plateNumber}
+                          </div>
                         </div>
-                        <div className="text-sm text-gray-500">
-                          {request.vehicle.plateNumber}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{request.purpose}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <Badge
-                        className={
-                          request.status === "approved"
-                            ? "bg-green-100 text-green-800"
-                            : request.status === "rejected"
-                            ? "bg-red-100 text-red-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }
-                      >
-                        {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {request.accessCode ? (
-                        <div className="text-sm font-mono font-bold text-primary">
-                          {request.accessCode}
-                        </div>
-                      ) : (
-                        <div className="text-sm text-gray-400">-</div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-                {userRequests.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
-                      No requests found
-                    </td>
-                  </tr>
-                )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{request.purpose}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Badge
+                          className={
+                            request.status === "approved"
+                              ? "bg-green-100 text-green-800"
+                              : request.status === "rejected"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-yellow-100 text-yellow-800"
+                          }
+                        >
+                          {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {request.accessCode ? (
+                          <div className="text-sm font-mono font-bold text-primary">
+                            {request.accessCode}
+                          </div>
+                        ) : (
+                          <div className="text-sm text-gray-400">-</div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {userRequests.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                        No requests found
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
           </Card>
         </div>
-        
+
         {/* Mobile view */}
         <div className="md:hidden space-y-4">
           {userRequests.map((request: VehicleRequestWithDetails) => (
@@ -295,8 +314,8 @@ export default function EmployeeDashboard() {
                       request.status === "approved"
                         ? "bg-green-100 text-green-800"
                         : request.status === "rejected"
-                        ? "bg-red-100 text-red-800"
-                        : "bg-yellow-100 text-yellow-800"
+                          ? "bg-red-100 text-red-800"
+                          : "bg-yellow-100 text-yellow-800"
                     }
                   >
                     {request.status.charAt(0).toUpperCase() + request.status.slice(1)}

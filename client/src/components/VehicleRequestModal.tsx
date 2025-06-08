@@ -78,7 +78,7 @@ export default function VehicleRequestModal({
 
   const { data: availableVehicles = [] } = useQuery({
     queryKey: ["/api/vehicles/available", startDate, endDate],
-    queryFn: () => 
+    queryFn: () =>
       startDate && endDate
         ? fetch(`/api/vehicles/available?startDate=${startDate}&endDate=${endDate}`).then(res => res.json())
         : Promise.resolve([]),
@@ -129,7 +129,7 @@ export default function VehicleRequestModal({
         <DialogHeader>
           <DialogTitle>Request Vehicle</DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <Label htmlFor="vehicle-select">Select Vehicle</Label>
